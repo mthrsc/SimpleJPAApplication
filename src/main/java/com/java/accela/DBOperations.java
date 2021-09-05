@@ -1,15 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.java.accela;
 
 /**
- *
  * @author Matthieu Roscio
+ *
+ * 04/09/2021
  */
-import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -28,7 +23,6 @@ public class DBOperations {
     }
 
     public final long persistPerson(Person p) {
-        long id = -1;
         tx.begin();
         em.persist(p);
         tx.commit();
@@ -45,8 +39,7 @@ public class DBOperations {
     }
 
     public final List retrieveWithFullName(String firstName, String lastName) {
-        String queryText = "SELECT p FROM Person p WHERE p.firstName = :firstName and p.lastName = :lastName";
-        Query query = em.createQuery(queryText);
+        Query query = em.createQuery("SELECT p FROM Person p WHERE p.firstName = :firstName and p.lastName = :lastName");
         query.setParameter("firstName", firstName);
         query.setParameter("lastName", lastName);
 

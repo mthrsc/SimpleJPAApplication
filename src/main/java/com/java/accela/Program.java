@@ -1,50 +1,47 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.java.accela;
 
-import com.sun.istack.Nullable;
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 import javax.persistence.RollbackException;
 
 /**
- *
  * @author Matthieu Roscio
+ *
+ * 04/09/2021
  */
 public class Program {
 
-    private String message = new String();
-    private String input = new String();
-    private boolean exit = false;
+    private String message;
+    private String input;
+    private boolean exit;
     private final Scanner scanner;
     private final DBOperations dbo;
 
     public Program() {
         scanner = new Scanner(System.in);
         dbo = new DBOperations();
+        message = "\n\nChoose what operation to perform:\n"
+                + "1. Add Person \n"
+                + "2. Edit Person's first name and last name\n"
+                + "3. Delete Person\n"
+                + "4. Add Address to person \n"
+                + "5. Edit Person's Address \n"
+                + "6. Delete Person's Address \n"
+                + "7. Count Number of Persons\n"
+                + "8. List Persons\n"
+                + "q to quit\n\n";
+        input = new String();
+        exit = false;
     }
 
     public void compute() {
         while (!exit) {
-            message = "\n\nChoose what operation to perform:\n"
-                    + "1. Add Person \n"
-                    + "2. Edit Person's first name and last name\n"
-                    + "3. Delete Person\n"
-                    + "4. Add Address to person \n"
-                    + "5. Edit Person's Address \n"
-                    + "6. Delete Person's Address \n"
-                    + "7. Count Number of Persons\n"
-                    + "8. List Persons\n"
-                    + "q to quit\n\n";
 
             System.out.println(message);
             input = scanner.nextLine();
             input = cleanInput(input);
 
+            //Switch statement for the main menu
             switch (input) {
                 case "1":
                     addPerson();
@@ -107,6 +104,9 @@ public class Program {
 
         Person p = null;
 
+        //Switch statement for case 2, 3, 4, 5, 6
+        //Since this cases require to retireve the person from the database they all call selectPerson() before
+        //passing the object to the relevant method
         switch (editType) {
             case "name":
                 System.out.println("\n\n Edit person's name:");
@@ -137,9 +137,75 @@ public class Program {
         }
     }
 
-    private final void countEntries() {
-        long count = dbo.countEntries();
-        System.out.println("There is " + count + " persons in the \"person\" database");
+    private final Person selectPerson() {
+        while (true) {
+            System.out.println("1. Find person with id");
+            System.out.println("2. Find person with first and last name");
+            System.out.println("Enter q to return");
+            input = scanner.nextLine();
+            input = cleanInput(input);
+
+            if (input.equalsIgnoreCase("q")) {
+                break;
+            }
+
+            if (input.equals("1")) {
+                try {
+                    long id = -1;
+                    Person p = null;
+
+                    System.out.println("\n\nFind person with id");
+                    System.out.println("Please enter id:");
+                    System.out.println("Enter q to return");
+
+                    input = scanner.nextLine();
+                    input = cleanInput(input);
+
+                    if (input.equalsIgnoreCase("q")) {
+                        break;
+                    }
+
+                    id = Long.parseLong(input);
+                    p = dbo.retrieveWithID(id);
+
+                    if (p == null) {
+                        System.out.println("No matching ID");
+                    } else {
+                        return p;
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input, IDs are integer. Eg. 1, 2, 3, 4...");
+                }
+            } else if (input.equals("2")) {
+                try {
+                    System.out.println("Please enter person's first name and last name separated by a space. Eg. James Gosling");
+                    System.out.println("Enter q to return");
+                    input = scanner.nextLine();
+                    input = cleanInput(input);
+
+                    if (input.equalsIgnoreCase("q")) {
+                        break;
+                    }
+
+                    String[] fullName = input.split("\\s+");
+
+                    List personsList = dbo.retrieveWithFullName(fullName[0], fullName[1]);
+                    if (personsList.size() == 0) {
+                        System.out.println("No matching entry");
+                        return null;
+                    } else if (personsList.size() == 1) {
+                        System.out.println(personsList.get(0).toString());
+                        return (Person) personsList.get(0);
+                    } else {
+                        System.out.println("\n\nSeverals entry matching, please select with ID");
+                        personsList.stream().forEach(System.out::println);
+                    }
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Invalid input, name format is James Gosling");
+                }
+            }
+        }
+        return null;
     }
 
     private final void removeAddress(Person p) {
@@ -268,75 +334,9 @@ public class Program {
         }
     }
 
-    private final Person selectPerson() {
-        while (true) {
-            System.out.println("1. Find person with id");
-            System.out.println("2. Find person with first and last name");
-            System.out.println("Enter q to return");
-            input = scanner.nextLine();
-            input = cleanInput(input);
-
-            if (input.equalsIgnoreCase("q")) {
-                break;
-            }
-
-            if (input.equals("1")) {
-                try {
-                    long id = -1;
-                    Person p = null;
-
-                    System.out.println("\n\nFind person with id");
-                    System.out.println("Please enter id:");
-                    System.out.println("Enter q to return");
-
-                    input = scanner.nextLine();
-                    input = cleanInput(input);
-
-                    if (input.equalsIgnoreCase("q")) {
-                        break;
-                    }
-
-                    id = Long.parseLong(input);
-                    p = dbo.retrieveWithID(id);
-
-                    if (p == null) {
-                        System.out.println("No matching ID");
-                    } else {
-                        return p;
-                    }
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid input, IDs are integer. Eg. 1, 2, 3, 4...");
-                }
-            } else if (input.equals("2")) {
-                try {
-                    System.out.println("Please enter person's first name and last name separated by a space. Eg. James Gosling");
-                    System.out.println("Enter q to return");
-                    input = scanner.nextLine();
-                    input = cleanInput(input);
-
-                    if (input.equalsIgnoreCase("q")) {
-                        break;
-                    }
-
-                    String[] fullName = input.split("\\s+");
-
-                    List personsList = dbo.retrieveWithFullName(fullName[0], fullName[1]);
-                    if (personsList.size() == 0) {
-                        System.out.println("No matching entry");
-                        return null;
-                    } else if (personsList.size() == 1) {
-                        System.out.println(personsList.get(0).toString());
-                        return (Person) personsList.get(0);
-                    } else {
-                        System.out.println("\n\nSeverals entry matching, please select with ID");
-                        personsList.stream().forEach(System.out::println);
-                    }
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    System.out.println("Invalid input, name format is James Gosling");
-                }
-            }
-        }
-        return null;
+    private final void countEntries() {
+        long count = dbo.countEntries();
+        System.out.println("There is " + count + " persons in the \"person\" database");
     }
 
     private final void printAll() {
